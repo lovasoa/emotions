@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Émotions</title>
+  </head>
+  <body>
+<canvas id="canvas" width="500" height="200"></canvas>
+<video id="video"></video>
+
+<script>
+// Put event listeners into place
+var canvas = document.getElementById("canvas"),
+	ctx = canvas.getContext("2d"),
+	video = document.getElementById("video");
+
+window.addEventListener("DOMContentLoaded", function() {
+// Grab elements, create settings, etc.
+	var videoObj = { "video": true },
+	errBack = function(error) {
+		console.log("Video capture error: ", error.code);
+	};
+
+	// Put video listeners into place
+	navigator.mediaDevices.getUserMedia(videoObj)
+  .then(function(stream) {
+   video.src = window.URL.createObjectURL(stream);
+   video.play();
+   video.onloadedmetadata = function(e) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      copyImage();
+    }
+	}).catch(errBack);
+}, false);
+
+function copyImage() {
+  ctx.drawImage(video, 0, 0);
+}
+
+function requestDetect(){
+  copyImage();
+  canvas.toBlob(function(blob){
+    var options = {
+      method: "POST",
+      body: blob,
+      headers: {
+        "Content-Type" : "application/octet-stream",
+        "Ocp-Apim-Subscription-Key" : "09ddd394db8b46998e6f239d0c2175a4"
+      }
+    };
+    fetch("https://api.projectoxford.ai/emotion/v1.0/recognize", options)
+      .then(r=>r.json())
+      .then(faces => faces.map(recognizedFace));
+  }, "image/jpeg", 0.5);
+}
+canvas.onclick = requestDetect;
+
+function recognizedFace(face) {
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 4;
+  var emotions = {
+    "anger": "red",
+    "fear": "purple",
+    "happiness": "green",
+    "sadness": "blue",
+    "surprise": "yellow"
+  }
+  var translations = {
+    "anger": "злой",
+    "fear": "трусливый",
+    "happiness": "счастливый",
+    "sadness": "грустный",
+    "surprise": "удивлённый"
+  }
+  var main = Object.keys(emotions).sort((e,f)=>face.scores[f]-face.scores[e])[0];
+  ctx.strokeStyle = emotions[main];
+  ctx.fillStyle = emotions[main];
+  var r = face.faceRectangle;
+  ctx.strokeRect(r.left, r.top, r.width, r.height);
+  var h = face.scores[main];
+  var percent = translations[main] + ": " + Math.round(h*100) + "%";
+  var measure = ctx.measureText(percent);
+  ctx.font = "15px sans";
+  ctx.textBaseline = "hanging";
+  ctx.fillText(percent, r.left + r.width/2 - measure.width/2, r.top - 40);
+}
+</script>
+  </body>
+</html>
