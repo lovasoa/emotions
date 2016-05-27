@@ -7,6 +7,7 @@
   <body>
 <canvas id="canvas" width="500" height="200"></canvas>
 <video id="video"></video>
+<h2 id="info" style="display:none">нажимайте на изображение !</h2>
 
 <script>
 // Put event listeners into place
@@ -30,6 +31,7 @@ window.addEventListener("DOMContentLoaded", function() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       copyImage();
+      document.getElementById("info").style.display = "block";
     }
 	}).catch(errBack);
 }, false);
