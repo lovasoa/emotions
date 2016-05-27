@@ -31,6 +31,7 @@ window.addEventListener("DOMContentLoaded", function() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       copyImage();
+      requestDetect();
       document.getElementById("info").style.display = "block";
     }
 	}).catch(errBack);
