@@ -70,11 +70,11 @@ function recognizedFace(face) {
     "surprise": "yellow"
   }
   var translations = {
-    "anger": "злой",
-    "fear": "трусливый",
-    "happiness": "счастливый",
-    "sadness": "грустный",
-    "surprise": "удивлённый"
+    "anger": "😠 злой",
+    "fear": "😱 трусливый",
+    "happiness": "☺️ счастливый",
+    "sadness": "😞 грустный",
+    "surprise": "😯 удивлённый"
   }
   var main = Object.keys(emotions).sort((e,f)=>face.scores[f]-face.scores[e])[0];
   ctx.strokeStyle = emotions[main];
@@ -84,7 +84,7 @@ function recognizedFace(face) {
   var h = face.scores[main];
   var percent = translations[main] + ": " + Math.round(h*100) + "%";
   var measure = ctx.measureText(percent);
-  ctx.font = "15px sans";
+  ctx.font = "22px sans";
   ctx.textBaseline = "hanging";
   ctx.fillText(percent, r.left + r.width/2 - measure.width/2, r.top - 40);
 }
