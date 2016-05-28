@@ -2,12 +2,16 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Émotions</title>
+    <title>Эмоции 😠😱☺️😞😯</title>
   </head>
   <body>
 <canvas id="canvas" width="500" height="200"></canvas>
 <video id="video"></video>
-<h2 id="info" style="display:none">нажимайте на изображение !</h2>
+<h2 id="info" hidden>нажимайте на изображение !</h2>
+<a id="save" download="Эмоции.jpg">Сохранить изображение</a>
+<h3 id="wait" hidden>Подождите...</h3>
+<h3 id="error" hidden>Ошибка !</h3>
+
 
 <script>
 // Put event listeners into place
@@ -17,10 +21,7 @@ var canvas = document.getElementById("canvas"),
 
 window.addEventListener("DOMContentLoaded", function() {
 // Grab elements, create settings, etc.
-	var videoObj = { "video": true },
-	errBack = function(error) {
-		console.log("Video capture error: ", error.code);
-	};
+	var videoObj = { "video": true };
 
 	// Put video listeners into place
 	navigator.mediaDevices.getUserMedia(videoObj)
@@ -32,7 +33,7 @@ window.addEventListener("DOMContentLoaded", function() {
       canvas.height = video.videoHeight;
       copyImage();
       requestDetect();
-      document.getElementById("info").style.display = "block";
+      document.getElementById("info").hidden = false;
     }
 	}).catch(errBack);
 }, false);
@@ -42,6 +43,7 @@ function copyImage() {
 }
 
 function requestDetect(){
+  document.getElementById("wait").hidden = false;
   copyImage();
   canvas.toBlob(function(blob){
     var options = {
@@ -54,12 +56,27 @@ function requestDetect(){
     };
     fetch("https://api.projectoxford.ai/emotion/v1.0/recognize", options)
       .then(r=>r.json())
-      .then(faces => faces.map(recognizedFace));
+      .then(paintImage(blob))
+      .then(faces => faces.forEach(recognizedFace))
+      .then(updateLink)
+      .catch(errBack);
   }, "image/jpeg", 0.5);
 }
 canvas.onclick = requestDetect;
 
+function paintImage(blob) {
+  return faces => new Promise((success, err) => {
+    var img = new Image;
+    img.src = window.URL.createObjectURL(blob);
+    img.onload = e => {ctx.drawImage(img,0,0); success(faces)}
+    img.onerror = e => err(e);
+  });
+}
+
 function recognizedFace(face) {
+  document.getElementById("wait").hidden = true;
+  document.getElementById("error").hidden = true;
+
   ctx.fillStyle = "black";
   ctx.lineWidth = 4;
   var emotions = {
@@ -87,6 +104,19 @@ function recognizedFace(face) {
   ctx.font = "22px sans";
   ctx.textBaseline = "hanging";
   ctx.fillText(percent, r.left + r.width/2 - measure.width/2, r.top - 40);
+  return face;
+}
+
+function updateLink() {
+  canvas.toBlob(function(blob){
+    var url = window.URL.createObjectURL(blob);
+    document.getElementById("save").href = url;
+  }, "image/jpeg", 0.95);
+}
+
+function errBack(error) {
+  console.error(error);
+  document.getElementById("error").hidden = false;
 }
 </script>
   </body>
